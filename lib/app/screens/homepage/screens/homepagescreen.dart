@@ -1,21 +1,203 @@
 import 'package:denomination/app/screens/homepage/provider/homepageprovider.dart';
+import 'package:denomination/app/screens/homepage/screens/historyScreen.dart';
 import 'package:denomination/gen/assets.gen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:number_to_words_english/number_to_words_english.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 
-class HomepageScreen extends StatelessWidget {
-  const HomepageScreen({super.key});
+class HomepageScreen extends StatefulWidget {
+  HomepageScreen({super.key});
+
+  @override
+  State<HomepageScreen> createState() => _HomepageScreenState();
+}
+
+class _HomepageScreenState extends State<HomepageScreen> {
+  final _key = GlobalKey<ExpandableFabState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: ExpandableFab.location,
       backgroundColor: Colors.black,
+      floatingActionButton: context.read<HomepageProvider>().totalSum == 0
+          ? null
+          : ExpandableFab(
+              key: _key,
+              openButtonBuilder: RotateFloatingActionButtonBuilder(
+                  child: const Icon(
+                    Icons.electric_bolt,
+                    color: Colors.white,
+                  ),
+                  fabSize: ExpandableFabSize.regular,
+                  foregroundColor: Colors.blue,
+                  backgroundColor: Colors.blue,
+                  shape: const CircleBorder(),
+                  angle: 0),
+              closeButtonBuilder: FloatingActionButtonBuilder(
+                size: 56,
+                builder: (BuildContext context, void Function()? onPressed,
+                    Animation<double> progress) {
+                  return FloatingActionButton(
+                    backgroundColor: Colors.blue,
+                    shape: const CircleBorder(),
+                    onPressed: onPressed,
+                    child: const Icon(
+                      Icons.electric_bolt,
+                      color: Colors.white,
+                    ),
+                  );
+                },
+              ),
+              distance: 70,
+              type: ExpandableFabType.up,
+              overlayStyle: ExpandableFabOverlayStyle(
+                color: Colors.black.withOpacity(0.5),
+                // blur: 5,
+              ),
+              children: [
+                FloatingActionButton.small(
+                  heroTag: null,
+                  child: const Icon(Icons.restart_alt),
+                  onPressed: () {
+                    _key.currentState!.toggle();
+                    context.read<HomepageProvider>().clearAllFields();
+                  },
+                ),
+                FloatingActionButton.small(
+                  heroTag: null,
+                  child: const Icon(Icons.download),
+                  onPressed: () {
+                    TextEditingController name = TextEditingController();
+                    _key.currentState!.toggle();
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          var category = [
+                            'General',
+                            'Income',
+                            'Expense',
+                          ];
+                          var dropdownvalue = 'General';
+                          if (context.read<HomepageProvider>().currentNote !=
+                              null) {
+                            dropdownvalue = context
+                                .read<HomepageProvider>()
+                                .currentNote!
+                                .category;
+                            name.text = context
+                                .read<HomepageProvider>()
+                                .currentNote!
+                                .name;
+                          }
+
+                          return Dialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    20.0)), //this right here
+                            child: SizedBox(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            icon: Icon(
+                                              Icons.close,
+                                              color: Colors.red,
+                                              size: 25.h,
+                                            )),
+                                      ],
+                                    ),
+                                    StatefulBuilder(
+                                      builder: (BuildContext context,
+                                          void Function(void Function())
+                                              setState) {
+                                        return DropdownButton(
+                                          isExpanded: true,
+                                          value: dropdownvalue,
+                                          icon: const Icon(
+                                              Icons.keyboard_arrow_down),
+                                          items: category.map((String items) {
+                                            return DropdownMenuItem(
+                                              value: items,
+                                              child: Text(items),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            setState(() {
+                                              dropdownvalue = newValue!;
+                                            });
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    SizedBox(
+                                        height: 120.h,
+                                        child: TextField(
+                                          controller: name,
+                                          maxLines: 2,
+                                          decoration: const InputDecoration(
+                                            enabledBorder: OutlineInputBorder(),
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        )),
+                                    SizedBox(
+                                      width: 150.h,
+                                      child: MaterialButton(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                        onPressed: () {
+                                          if (context
+                                                  .read<HomepageProvider>()
+                                                  .currentNote !=
+                                              null) {
+                                            context
+                                                .read<HomepageProvider>()
+                                                .updateNote(
+                                                    name.text, dropdownvalue);
+                                          } else {
+                                            context
+                                                .read<HomepageProvider>()
+                                                .saveData(
+                                                    name.text.isEmpty
+                                                        ? ""
+                                                        : name.text,
+                                                    dropdownvalue);
+                                          }
+
+                                          Navigator.pop(context);
+                                        },
+                                        color: Colors.black,
+                                        child: const Text(
+                                          "Save",
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        });
+                  },
+                ),
+              ],
+            ),
       body: Column(
         children: [
           buildimage(),
@@ -39,6 +221,34 @@ class HomepageScreen extends StatelessWidget {
               Assets.images.currencyBanner.image(
                   height: 180.h, width: double.infinity, fit: BoxFit.cover),
               Positioned(
+                top: 20,
+                right: 0,
+                child: PopupMenuButton<int>(
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (BuildContext context) {
+                          return HistoryScreen();
+                        }));
+                      },
+                      value: 1,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.history),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text("History")
+                        ],
+                      ),
+                    ),
+                  ],
+                  color: Colors.grey,
+                  elevation: 2,
+                ),
+              ),
+              Positioned(
                 bottom: 20,
                 left: 10,
                 child: Column(
@@ -51,22 +261,26 @@ class HomepageScreen extends StatelessWidget {
                           color: Colors.white,
                           fontWeight: FontWeight.w500),
                     ),
-                    Text(
-                      "${value.formatsum(value.totalSum)}",
-                      style: TextStyle(
-                          fontSize: 22.h,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      softWrap: true,
-                      "${toBeginningOfSentenceCase(NumberToWordsEnglish.convert(value.totalSum))} Only/-",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          fontSize: 18.h,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500),
-                    ),
+                    value.totalSum != 0
+                        ? Text(
+                            "${value.formatsum(value.totalSum)}",
+                            style: TextStyle(
+                                fontSize: 22.h,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500),
+                          )
+                        : const SizedBox(),
+                    value.totalSum != 0
+                        ? Text(
+                            softWrap: true,
+                            "${toBeginningOfSentenceCase(NumberToWordsEnglish.convert(value.totalSum))} Only/-",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 18.h,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500),
+                          )
+                        : const SizedBox(),
                   ],
                 ),
               ),

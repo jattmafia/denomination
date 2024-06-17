@@ -1,10 +1,15 @@
-import 'package:denomination/app/screens/homepage/homepagescreen.dart';
+import 'package:denomination/app/screens/homepage/screens/homepagescreen.dart';
+import 'package:denomination/app/screens/homepage/model/note_model.dart';
 import 'package:denomination/app/screens/homepage/provider/homepageprovider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+Future<void> main() async {
+   await Hive.initFlutter();
+  Hive.registerAdapter(NoteModelAdapter());
+  await Hive.openBox<NoteModel>('notes');
   runApp(const MyApp());
 }
 
@@ -57,7 +62,7 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            home: const HomepageScreen(),
+            home:  HomepageScreen(),
           ),
         ),
       ),
